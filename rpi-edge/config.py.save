@@ -1,0 +1,67 @@
+import Path
+
+
+SERVER_HOST = os.getenv("GUARDIAN_HOST", "0.0.0.0")
+SERVER_PORT = int(os.getenv("GUARDIAN_PORT", "5000"))
+
+TEMP_IMAGE_PATH = os.getenv(
+    "GUARDIAN_TEMP_IMAGE", "/tmp/guardian-food-scan.jpg"
+)
+CAMERA_RESOLUTION_WIDTH = int(os.getenv("GUARDIAN_CAMERA_WIDTH", "1280"))
+CAMERA_RESOLUTION_HEIGHT = int(os.getenv("GUARDIAN_CAMERA_HEIGHT", "720"))
+CAMERA_CAPTURE_TIMEOUT_SECONDS = float(
+    os.getenv("GUARDIAN_CAMERA_TIMEOUT_SECONDS", "20")
+)
+
+OLLAMA_API_BASE = os.getenv("OLLAMA_API_BASE", "http://127.0.0.1:11434")
+_MODEL_CONFIG_PATH = (
+    Path.home() / ".config" / "guardian-edge" / "ollama-model"
+)
+try:
+    _CONFIGURED_MODEL = _MODEL_CONFIG_PATH.read_text(encoding="utf-8").strip()
+except FileNotFoundError:
+    _CONFIGURED_MODEL = ""
+OLLAMA_MODEL = "moondream"
+    "OLLAMA_MODEL", _CONFIGURED_MODEL or "llama3.2-vision"
+)
+OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "180"))
+OLLAMA_MODEL_CONFIG_PATH = _MODEL_CONFIG_PATH
+
+PIN_RED_LED = int(os.getenv("GUARDIAN_PIN_RED_LED", "17"))
+PIN_YELLOW_LED = int(os.getenv("GUARDIAN_PIN_YELLOW_LED", "27"))
+PIN_GREEN_LED = int(os.getenv("GUARDIAN_PIN_GREEN_LED", "22"))
+
+MDNS_SERVICE_NAME = os.getenv("GUARDIAN_MDNS_SERVICE_NAME", "GuardianFoodScanner")
+MDNS_SERVICE_TYPE = "_guardian._tcp.local."
+MDNS_HOSTNAME = os.getenv("GUARDIAN_MDNS_HOSTNAME", "raspberrypi.local.")
+/
+
+^/
+
+"""Configuration variables for the Guardian local edge scanner."""
+
+import os
+from pathlib import Path
+
+# Server Gateway Settings
+SERVER_HOST = "0.0.0.0"
+SERVER_PORT = 5000
+
+# mDNS Discovery Settings
+MDNS_NAME = "raspberrypi"
+MDNS_TYPE = "_http._tcp.local."
+
+# File & Storage Paths
+TEMP_IMAGE_PATH = "/tmp/guardian_capture.jpg"
+OLLAMA_MODEL_CONFIG_PATH = Path("/home/navaspi/.config/guardian/ollama_model")
+
+# Ollama Endpoint Configuration
+OLLAMA_API_BASE = "http://127.0.0.1:11434"
+OLLAMA_TIMEOUT_SECONDS = 90
+
+# Set the active model directly to moondream
+OLLAMA_MODEL = "moondream"
+
+# Physical Hardware LED Pins (BCM GPIO numbers)
+GPIO_RED_PIN = 17
+GPIO_YELLOW_PIN =

@@ -7,6 +7,7 @@ Exposes endpoints for camera capture, state transitions, and health checks.
 import sys
 import signal
 import logging
+import threading
 from flask import Flask, request, jsonify
 
 from config import SERVER_HOST, SERVER_PORT, TEMP_IMAGE_PATH
@@ -28,6 +29,7 @@ gpio_controller = ThreadSafeGPIOController()
 camera_service = CameraService()
 vision_service = OllamaVisionService()
 mdns_manager = MDNSServiceManager()
+scan_lock = threading.Lock()
 
 
 @app.route("/api/v1/health", methods=["GET"])
@@ -42,18 +44,19 @@ def health_check():
 def capture_and_analyze():
     """Captures a photo via hardware camera, runs Ollama vision, and returns ingredients."""
     logger.info("Received capture-and-analyze request")
-    
-    # 1. Trigger hardware frame capture
-    success = camera_service.capture_frame(TEMP_IMAGE_PATH)
-    if not success:
-        gpio_controller.set_state("ERROR")
-        return jsonify({
-            "error": "Failed to capture image from camera hardware",
-            "ingredients": []
-        }), 500
 
-    # 2. Run edge AI inference
-    ingredients = vision_service.analyze_image(TEMP_IMAGE_PATH)
+    # The image path is shared, so serialize capture through inference as one job.
+    with scan_lock:
+        success = camera_service.capture_frame(TEMP_IMAGE_PATH)
+        if not success:
+            gpio_controller.set_state("ERROR")
+            return jsonify({
+                "error": "Failed to capture image from camera hardware",
+                "ingredients": []
+            }), 500
+
+        ingredients = vision_service.analyze_image(TEMP_IMAGE_PATH)
+
     if not ingredients:
         gpio_controller.set_state("ERROR")
         return jsonify({
@@ -85,8 +88,10 @@ def update_gpio_state():
 
 def handle_shutdown(signum, frame):
     logger.info("Stopping Guardian Edge Server...")
-    mdns_manager.stop()
-    gpio_controller.shutdown()
+    try:
+        mdns_manager.stop()
+    finally:
+        gpio_controller.shutdown()
     sys.exit(0)
 
 
